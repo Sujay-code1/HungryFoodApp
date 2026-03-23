@@ -4,10 +4,12 @@ import SignIn from './pages/SignIn';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ForgotPassword from './pages/ForgotPassword';
+import useGetCurrentUser from './hooks/useGetCurrentUser';
 
 export const serverUrl = "http://localhost:8000"
 
 function App() {
+  useGetCurrentUser()
   return (
     <>
    <Routes>

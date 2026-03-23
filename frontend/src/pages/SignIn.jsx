@@ -7,6 +7,8 @@ import { serverUrl } from '../App';
 import { toast } from "react-toastify";
 import { auth } from "/firebase.js";
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useDispatch } from 'react-redux';
+import { setUserData } from '../redux/userSlice';
 
 function SignIn() {
   const primaryColor = "#ff4d2d";
@@ -20,6 +22,7 @@ function SignIn() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const dispatch = useDispatch();
   // 🔹 Email/Password Sign In
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -38,7 +41,7 @@ function SignIn() {
         { withCredentials: true }
       );
 
-      console.log("Signin Successful:", result.data);
+      dispatch(setUserData(result.data))
 
       setEmail("");
       setPassword("");
@@ -66,7 +69,7 @@ function SignIn() {
         { withCredentials: true }
       );
 
-      console.log("Google Auth Success:", data);
+      dispatch(setUserData(data))
 
       toast.success("Google Sign-in Successful 🎉");
 

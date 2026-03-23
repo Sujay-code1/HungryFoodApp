@@ -7,6 +7,8 @@ import { serverUrl } from '../App';
 import { toast } from "react-toastify";
 import { auth } from "/firebase.js"; 
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useDispatch } from 'react-redux';
+import { setUserData } from '../redux/userSlice';
 
 function SignUp() {
   const primaryColor = "#ff4d2d";
@@ -21,6 +23,8 @@ function SignUp() {
   const [password, setPassword] = useState("");
   const [mobile, setMobile] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const dispactch = useDispatch()
 
   // ✅ Validation functions
   const isValidEmail = (email) =>
@@ -56,7 +60,7 @@ function SignUp() {
     try {
       setLoading(true);
 
-      const result = await axios.post(
+    const result =  await axios.post(
         `${serverUrl}/api/auth/signup`,
         {
           fullName,
@@ -68,7 +72,7 @@ function SignUp() {
         { withCredentials: true }
       );
 
-      console.log("Signup Successful:", result.data);
+      dispactch(setUserData(result.data))
 
       setFullName("");
       setEmail("");
@@ -108,7 +112,7 @@ function SignUp() {
         { withCredentials: true }
       );
 
-      console.log("Google Signup Success:", data);
+      dispactch(setUserData(data))
 
       toast.success("Google Signup Successful 🎉");
     } catch (error) {
