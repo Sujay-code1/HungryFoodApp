@@ -7,11 +7,13 @@ import "react-toastify/dist/ReactToastify.css";
 import ForgotPassword from './pages/ForgotPassword';
 import useGetCurrentUser from './hooks/useGetCurrentUser';
 import { useSelector } from 'react-redux';
+import useGetCity from './hooks/useGetCity';
 
 export const serverUrl = "http://localhost:8000"
 
 function App() {
   useGetCurrentUser()
+  useGetCity()
   const {userData}=useSelector(state=>state.user)
   return (
     <>

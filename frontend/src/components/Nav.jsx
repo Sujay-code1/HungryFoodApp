@@ -4,12 +4,30 @@ import { FiSearch } from "react-icons/fi";
 import { CiShoppingCart } from "react-icons/ci";
 import { IoClose } from "react-icons/io5";
 import { useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux';
+import axios from 'axios';
+import { serverUrl } from '../App';
+import { setUserData } from '../redux/userSlice';
+
 
 function Nav() {
-    const { userData } = useSelector(state => state.user)
+    const { userData, city } = useSelector(state => state.user)
     const [showDropdown, setShowDropdown] = useState(false)
     const [showMobileSearch, setShowMobileSearch] = useState(false)
     const dropdownRef = useRef(null)
+
+    const dispatch = useDispatch();
+    
+
+    const handleLogout = async() => {
+        try {
+             axios.post(`${serverUrl}/api/v1/auth/signout`,
+                {withCredentials:true})
+                dispatch(setUserData(null))
+        } catch (error) {
+            console.log("Logout failed:", error)
+        }
+    }
 
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -32,7 +50,7 @@ function Nav() {
                 <div className='md:w-[60%] lg:w-[38%] h-[80%] bg-white rounded-lg items-center gap-[20px] md:flex hidden'>
                     <div className='flex items-center w-[30%] overflow-hidden gap-[10px] px-[10px] border-r-[2px] border-gray-400'>
                         <IoLocationSharp size={25} className='text-[#ff4d2d]' />
-                        <div className='w-[80%] truncate text-gray-600'>Cuttack</div>
+                        <div className='w-[80%] truncate text-gray-600'>{city}</div>
                     </div>
                     <div className='w-[80%] flex items-center gap-[10px]'>
                         <FiSearch size={25} />
@@ -75,7 +93,7 @@ function Nav() {
                     <div className='relative' ref={dropdownRef}>
                         <div
                             onClick={() => setShowDropdown(prev => !prev)}
-                            className='flex items-center px-3 py-1 md:px-4 md:py-2 text-sm font-bold text-orange-500 bg-white rounded-full cursor-pointer select-none hover:bg-orange-200'
+                            className='flex items-center px-3 py-1 text-sm font-bold text-orange-500 bg-white rounded-full cursor-pointer select-none md:px-4 md:py-2 hover:bg-orange-200'
                         >
                             {userData?.fullName?.slice(0, 1) ?? 'U'}
                         </div>
@@ -88,7 +106,9 @@ function Nav() {
                                 <div className='text-[#ff4d2d] font-semibold cursor-pointer hover:opacity-70'>
                                     My Order
                                 </div>
-                                <div className='text-[#ff4d2d] cursor-pointer hover:opacity-70'>
+                                <div 
+                                onClick={handleLogout}
+                                className='text-[#ff4d2d] cursor-pointer hover:opacity-70'>
                                     Log Out
                                 </div>
                             </div>
@@ -103,11 +123,11 @@ function Nav() {
                 <div className='flex items-center gap-3 px-4 py-3 bg-orange-400'>
                     <div className='flex items-center flex-1 gap-3 bg-white rounded-lg px-3 h-[42px]'>
                         <IoLocationSharp size={20} className='text-[#ff4d2d] shrink-0' />
-                        <span className='text-gray-500 text-sm border-r border-gray-300 pr-3 shrink-0'>Cuttack</span>
+                        <span className='pr-3 text-sm text-gray-500 border-r border-gray-300 shrink-0'>Cuttack</span>
                         <FiSearch size={18} className='text-gray-400 shrink-0' />
                         <input
                             autoFocus
-                            className='flex-1 text-gray-700 outline-none border-none text-sm'
+                            className='flex-1 text-sm text-gray-700 border-none outline-none'
                             type='text'
                             placeholder='Search good food...'
                         />
