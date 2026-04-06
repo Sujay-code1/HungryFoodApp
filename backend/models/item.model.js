@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-const itemSchema = new mongoose.Schema({
+ const itemSchema = new mongoose.Schema({
    name:{
         type: String,
         required:true,
@@ -47,4 +47,5 @@ const itemSchema = new mongoose.Schema({
   }
 },{timestamps:true})
 
-const Item = mongoose.model("Item",itemSchema);
+ const Item = mongoose.model("Item",itemSchema);
+ export default Item;
