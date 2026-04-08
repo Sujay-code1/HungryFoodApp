@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import axios from "axios";
 import { serverUrl } from '../App';
 import { useDispatch } from 'react-redux';
-import { setMyShopData } from '../redux/userSlice';
+import { setMyShopData } from '../redux/shopSlice';
 
 function useGetMyshop() {
   const dispatch = useDispatch();
