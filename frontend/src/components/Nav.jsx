@@ -7,25 +7,27 @@ import { MdReceipt } from 'react-icons/md';
 import { useSelector } from 'react-redux'
 import { useDispatch } from 'react-redux';
 import axios from 'axios';
-import { serverUrl } from '../App';
+import { serverUrl } from '../config';
 import { setUserData } from '../redux/userSlice';
+import { useNavigate } from 'react-router-dom';
 
 
 function Nav() {
-    const { userData, city } = useSelector(state => state.user)
+    const { userData, city,  } = useSelector(state => state.user)
     const [showDropdown, setShowDropdown] = useState(false)
     const [showMobileSearch, setShowMobileSearch] = useState(false)
     const dropdownRef = useRef(null)
 
     const ownerOrderCount = userData?.orders?.length ?? 0
     const dispatch = useDispatch();
-    
+    const navigate = useNavigate();
 
     const handleLogout = async() => {
         try {
-             axios.post(`${serverUrl}/api/v1/auth/signout`,
-                {withCredentials:true})
-                dispatch(setUserData(null))
+            await axios.get(`${serverUrl}/api/auth/signout`, {
+                withCredentials: true,
+            });
+            dispatch(setUserData(null))
         } catch (error) {
             console.log("Logout failed:", error)
         }
@@ -91,6 +93,7 @@ function Nav() {
                     {/* Add item - owner only */}
                     {userData?.role === 'owner' && (
                         <button
+                         onClick={() => navigate('/add-item')}
                             className='flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs md:text-sm font-semibold transition-colors cursor-pointer'
                         >
                             <span className='text-base font-bold md:text-lg'>+</span>
@@ -140,9 +143,13 @@ function Nav() {
                                 <div className='text-[17px] font-semibold'>
                                     {userData?.fullName ?? 'User'}
                                 </div>
-                                <div className='text-[#ff4d2d] font-semibold cursor-pointer hover:opacity-70'>
+
+                                {userData?.role !== 'owner' && (
+                                     <div className='text-[#ff4d2d] font-semibold cursor-pointer hover:opacity-70'>
                                     My Order
                                 </div>
+                                )}
+                               
                                 <div 
                                 onClick={handleLogout}
                                 className='text-[#ff4d2d] cursor-pointer hover:opacity-70'>

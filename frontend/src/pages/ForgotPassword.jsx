@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { IoMdArrowBack } from "react-icons/io";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios'
-import { serverUrl } from '../App';
+import { serverUrl } from '../config';
 import { toast } from "react-toastify";
 
 function ForgotPassword() {
@@ -100,7 +100,7 @@ function ForgotPassword() {
 
   return (
     <div className='w-full flex items-center justify-center min-h-screen p-4 bg-[#fff9f6]'>
-      <div className='bg-white rounded-xl shadow-lg w-full max-w-md p-8'>
+      <div className='w-full max-w-md p-8 bg-white shadow-lg rounded-xl'>
 
         <div className='flex items-center gap-4 mb-6'>
           <IoMdArrowBack onClick={() => navigate("/signin")} size={30} className='text-[#ff4d2d] cursor-pointer ' />
@@ -135,7 +135,7 @@ function ForgotPassword() {
         {step === 2 && (
           <div>
             <div className='mb-6'>
-              <label className='block mb-1 font-medium text-gray-700 text-xl'>OTP</label>
+              <label className='block mb-1 text-xl font-medium text-gray-700'>OTP</label>
               <input
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
@@ -159,7 +159,7 @@ function ForgotPassword() {
         {step === 3 && (
           <div>
             <div className='mb-6'>
-              <label className='block mb-1 font-medium text-gray-700 text-xl'>New Password</label>
+              <label className='block mb-1 text-xl font-medium text-gray-700'>New Password</label>
               <input
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -170,7 +170,7 @@ function ForgotPassword() {
             </div>
 
             <div className='mb-6'>
-              <label className='block mb-1 font-medium text-gray-700 text-xl'>Confirm Password</label>
+              <label className='block mb-1 text-xl font-medium text-gray-700'>Confirm Password</label>
               <input
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}

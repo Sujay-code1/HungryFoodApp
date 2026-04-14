@@ -16,7 +16,7 @@ import mongoose from "mongoose";
     required:true
   },
 
-  categoty:{
+  category:{
     type:String,
     enum:[
         "Snacks",

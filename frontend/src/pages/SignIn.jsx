@@ -3,7 +3,7 @@ import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import axios from 'axios';
-import { serverUrl } from '../App';
+import { serverUrl } from '../config';
 import { toast } from "react-toastify";
 import { auth } from "/firebase.js";
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
@@ -65,7 +65,12 @@ function SignIn() {
 
       const { data } = await axios.post(
         `${serverUrl}/api/auth/google-auth`,
-        { email: result.user.email },
+        {
+          fullName: result.user.displayName || result.user.email.split("@")[0],
+          email: result.user.email,
+          mobile: "",
+          role: "user",
+        },
         { withCredentials: true }
       );
 

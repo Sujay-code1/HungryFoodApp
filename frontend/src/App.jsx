@@ -10,10 +10,12 @@ import { useSelector } from 'react-redux';
 import useGetCity from './hooks/useGetCity';
 import useGetMyshop from './hooks/useGetMyshop';
 import CreateEditShop from './pages/CreateEditShop';
-
-export const serverUrl = "http://localhost:8000"
+import AddItem from './pages/AddItem';
+import EditItem from './pages/EditItem';
 
 function App() {
+ 
+
   useGetCurrentUser()
   useGetCity()
   useGetMyshop()
@@ -27,6 +29,8 @@ function App() {
      <Route path='/forgot-password' element={!userData ? <ForgotPassword/> : <Navigate to={"/"}/>}/>
      <Route path='/' element={userData ? <Home/>:<Navigate to={"/signin"}/>}/>
      <Route path='/create-edit-shop' element={userData ? <CreateEditShop/>:<Navigate to={"/signin"}/>}/>
+     <Route path='/add-item' element={userData ? <AddItem/>:<Navigate to={"/signin"}/>}/>
+     <Route path='/edit-item/:id' element={userData ? <EditItem/>:<Navigate to={"/signin"}/>}/>
    </Routes>
 
     <ToastContainer position="top-right" autoClose={3000} />

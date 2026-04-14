@@ -11,7 +11,7 @@ export  const getCurrentUser = async(req, res)=>{
             return res.status(400).json({message:"user is not found"})
         }
 
-        const user=await User.findById(userId)
+        const user=await User.findById(userId).select('-password')
         if(!user){
             return res.status(400).json({message:"userId is not found"})
         }

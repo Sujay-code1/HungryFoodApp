@@ -3,7 +3,7 @@ import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { Link } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import axios from 'axios';
-import { serverUrl } from '../App';
+import { serverUrl } from '../config';
 import { toast } from "react-toastify";
 import { auth } from "/firebase.js"; 
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
@@ -24,7 +24,7 @@ function SignUp() {
   const [mobile, setMobile] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const dispactch = useDispatch()
+  const dispatch = useDispatch()
 
   // ✅ Validation functions
   const isValidEmail = (email) =>
@@ -60,24 +60,24 @@ function SignUp() {
     try {
       setLoading(true);
 
-    const result =  await axios.post(
+      const result = await axios.post(
         `${serverUrl}/api/auth/signup`,
         {
           fullName,
           email,
           password,
           mobile,
-          role
+          role,
         },
         { withCredentials: true }
       );
 
-      dispactch(setUserData(result.data))
-
+      dispatch(setUserData(result.data));
       setFullName("");
       setEmail("");
       setPassword("");
       setMobile("");
+      setRole("user");
 
       toast.success("Signup Successful 🎉");
     } catch (error) {
@@ -112,8 +112,7 @@ function SignUp() {
         { withCredentials: true }
       );
 
-      dispactch(setUserData(data))
-
+      dispatch(setUserData(data));
       toast.success("Google Signup Successful 🎉");
     } catch (error) {
       toast.error(error.response?.data?.message || "Google signup failed ❌");
@@ -208,18 +207,23 @@ function SignUp() {
             Role
           </label>
           <div className='flex gap-2'>
-            {["user", "owner", "delivery boy"].map((r) => (
+            {[
+              { label: 'User', value: 'user' },
+              { label: 'Owner', value: 'owner' },
+              { label: 'Delivery Boy', value: 'deliveryBoy' },
+            ].map((option) => (
               <button
-                key={r}
-                onClick={() => setRole(r)}
+                key={option.value}
+                type='button'
+                onClick={() => setRole(option.value)}
                 className='flex-1 px-3 py-2 font-medium text-center border rounded-lg'
                 style={
-                  role === r
+                  role === option.value
                     ? { backgroundColor: primaryColor, color: "white" }
                     : { border: `1px solid ${primaryColor}` }
                 }
               >
-                {r}
+                {option.label}
               </button>
             ))}
           </div>
@@ -260,3 +264,4 @@ function SignUp() {
 }
 
 export default SignUp;
+

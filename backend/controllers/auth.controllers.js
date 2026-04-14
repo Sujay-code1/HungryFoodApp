@@ -8,8 +8,10 @@ import { sentOtpMail } from '../utils/mail.js';
 export const signUp = async (req, res) => {
    try {
       const { fullName, email, password, role, mobile } = req.body
+      const allowedRoles = ["user", "owner", "deliveryBoy"]
+      const userRole = allowedRoles.includes(role) ? role : "user"
 
-      if (!fullName || !email || !password) {
+      if (!fullName || !email || !password || !mobile) {
          return res.status(400).json({ message: "Invalid data", success: false });
       }
 
@@ -25,7 +27,7 @@ export const signUp = async (req, res) => {
          return res.status(400).json({ message: "password must be atle3ast six characters" })
       }
 
-      if (mobile.length < 10) {
+      if (typeof mobile !== "string" || mobile.trim().length < 10) {
          return res.status(400).json({ message: "Mobile Number must be atleast ten digits" })
       }
 
@@ -33,7 +35,7 @@ export const signUp = async (req, res) => {
       user = await User.create({
          fullName,
          email,
-         role,
+         role: userRole,
          mobile,
          password: hashedPassword
       })
@@ -55,7 +57,7 @@ export const signUp = async (req, res) => {
 
 export const signIn = async (req, res) => {
    try {
-      const { email, password, } = req.body
+      const { email, password } = req.body
 
       if (!email || !password) {
          return res.status(400).json({ message: "Invalid data", success: false });
@@ -83,7 +85,7 @@ export const signIn = async (req, res) => {
 
       return res.status(200).json(user)
    } catch (error) {
-      return res.status(500).json(`sign up error ${error}`)
+      return res.status(500).json(`sign in error ${error}`)
    }
 }
 
@@ -160,13 +162,18 @@ export const resetPassword = async (req, res) => {
    }
 }
 
-export const googleAuth = async(req, res)=>{
+export const googleAuth = async (req, res) => {
     try {
-      const{fullName,email,mobile,role} = req.body
-      let user = await User.findOne({email})
-      if(!user){
-        user=await User.create({
-         fullName,email,mobile,role
+      const { fullName, email, mobile, role } = req.body
+      const allowedRoles = ["user", "owner", "deliveryBoy"]
+      const userRole = allowedRoles.includes(role) ? role : "user"
+      let user = await User.findOne({ email })
+      if (!user) {
+        user = await User.create({
+         fullName: fullName || email.split("@")[0],
+         email,
+         mobile: mobile || "",
+         role: userRole,
         })
       }
 
