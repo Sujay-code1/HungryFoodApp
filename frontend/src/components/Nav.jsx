@@ -44,7 +44,7 @@ function Nav() {
     }, [])
 
     return (
-        <div className='w-full fixed top-0 z-[9999] bg-orange-500 shadow-md left-0 right-0' >
+        <div className='w-full fixed top-0 z-[9999] bg-orange-400 shadow-md left-0 right-0' >
 
             {/* Main navbar row */}
             

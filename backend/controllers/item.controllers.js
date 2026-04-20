@@ -5,9 +5,10 @@ import Shop from "../models/shop.model.js";
 export const addItem = async (req, res)=>{ 
     try {
         const{name, category, price, foodType}  = req.body;
-        let image ;
+        let image = "" ;
         if(req.file){
-            image = await uploadOnCloudinary(req.file.path)
+            const uploadedImage = await uploadOnCloudinary(req.file.path)
+            image = uploadedImage;
         }
         const shop = await Shop.findOne({ owner: req.userid });
         if (!shop) {
@@ -28,7 +29,9 @@ export const addItem = async (req, res)=>{
 
         return res.status(201).json({ message: "Item added successfully", item });
     } catch (error) {
-        res.status(500).json({message: "Error adding item"});
+          console.error("ADD ITEM ERROR 👉", error.message);
+  console.error(error.stack);
+  res.status(500).json({message: error.message});
     }
 }
 
@@ -39,7 +42,8 @@ export const editItem = async (req, res) => {
         const updateData = { name, category, price, foodType };
 
         if (req.file) {
-            updateData.image = await uploadOnCloudinary(req.file.path);
+           const uploadedImage = await uploadOnCloudinary(req.file.path);
+           updateData.image = uploadedImage;
         }
 
         const item = await Item.findByIdAndUpdate(itemId, updateData, { new: true });

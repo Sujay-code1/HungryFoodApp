@@ -22,6 +22,8 @@ function AddItem() {
   const { state } = useLocation()
   const existingItem = state?.item || null
 
+    const isEditMode = Boolean(existingItem)
+
   const [name, setName]           = useState('')
   const [price, setPrice]         = useState('')
   const [category, setCategory]   = useState('')
@@ -29,6 +31,8 @@ function AddItem() {
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [loading, setLoading]     = useState(false)
+
+
 
   useEffect(() => {
     if (existingItem) {
@@ -98,6 +102,9 @@ function AddItem() {
 
       toast.success(`Item ${isEditMode ? 'updated' : 'added'} successfully!`)
       navigate('/')
+
+   
+      
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to save item.')
     } finally {
@@ -105,7 +112,7 @@ function AddItem() {
     }
   }
 
-  const isEditMode = Boolean(existingItem)
+  
 
   return (
     <div className='relative flex flex-col items-center justify-center min-h-screen p-6 bg-gradient-to-br from-orange-50 to-white'>

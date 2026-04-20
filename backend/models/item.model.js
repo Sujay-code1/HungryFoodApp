@@ -7,7 +7,7 @@ import mongoose from "mongoose";
 
   image:{
     type:String,
-    required:true
+    required:false
   },
 
   shop:{
