@@ -9,6 +9,7 @@ import { auth } from "/firebase.js";
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { useDispatch } from 'react-redux';
 import { setUserData } from '../redux/userSlice';
+import { SiFoodpanda } from "react-icons/si";
 
 function SignIn() {
   const primaryColor = "#ff4d2d";
@@ -95,10 +96,11 @@ function SignIn() {
         style={{ border: `1px solid ${borderColor}` }}
       >
         <h1
-          className="mb-2 text-3xl font-bold"
+          className='flex items-center gap-2 text-xl font-bold text-white md:text-3xl'
           style={{ color: primaryColor }}
         >
-          Hungry.
+          Hungry
+          <SiFoodpanda size={30} className='md:text-3xl' />
         </h1>
 
         <p className="mb-8 text-gray-600">

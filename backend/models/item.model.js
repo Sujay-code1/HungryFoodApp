@@ -44,6 +44,17 @@ import mongoose from "mongoose";
     type:String,
     enum:["Veg","Non-Veg"],
     required:true
+  },
+
+  rating:{
+    average:{
+      type:Number,
+      default:0,
+    },
+     average:{
+      type:Number,
+      default:0,
+    }
   }
 },{timestamps:true})
 

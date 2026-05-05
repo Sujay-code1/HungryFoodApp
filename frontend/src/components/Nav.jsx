@@ -10,6 +10,7 @@ import axios from 'axios';
 import { serverUrl } from '../config';
 import { setUserData } from '../redux/userSlice';
 import { useNavigate } from 'react-router-dom';
+import { SiFoodpanda } from "react-icons/si";
 
 
 function Nav() {
@@ -49,7 +50,12 @@ function Nav() {
             {/* Main navbar row */}
             
           <div className='w-full h-[70px] flex items-center justify-between px-5 md:px-5   gap-5'>
-                <h1 className='text-xl font-bold text-white md:text-3xl'>Hungry.</h1>
+                <h1 className='flex items-center gap-2 text-xl font-bold text-white md:text-3xl'>
+                  Hungry
+                  <SiFoodpanda size={30} className='md:text-3xl' />
+                </h1>
+                
+               
 
                 {/* Search bar - desktop only */}
                 {userData?.role !== 'owner' && (

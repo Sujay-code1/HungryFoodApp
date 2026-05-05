@@ -24,7 +24,13 @@ function useGetCity() {
         dispatch(setLocation({ city, state }));
       } catch (error) {
         console.error("Failed to fetch city/state:", error);
+        // Set default location if API fails
+        dispatch(setLocation({ city: 'Cuttack', state: 'Odisha' }));
       }
+    }, (error) => {
+      console.error("Geolocation error:", error);
+      // Set default location if geolocation fails
+      dispatch(setLocation({ city: 'Cuttack', state: 'Odisha' }));
     });
   }, [userData]);
 }
