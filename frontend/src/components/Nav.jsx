@@ -14,12 +14,13 @@ import { SiFoodpanda } from "react-icons/si";
 
 
 function Nav() {
-    const { userData, city,  } = useSelector(state => state.user)
+    const { userData, city, cartItems } = useSelector(state => state.user)
     const [showDropdown, setShowDropdown] = useState(false)
     const [showMobileSearch, setShowMobileSearch] = useState(false)
     const dropdownRef = useRef(null)
 
     const ownerOrderCount = userData?.orders?.length ?? 0
+    const cartCount = cartItems?.reduce((total, item) => total + item.quantity, 0) ?? 0
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
@@ -127,11 +128,15 @@ function Nav() {
 
                     {/* Cart */}
                     {userData?.role !== 'owner' && (
-                        <button className='relative flex items-center justify-center transition-colors rounded-full cursor-pointer w-9 h-9 hover:bg-orange-600'>
+                        <button
+                        onClick={() => navigate('/cart')}
+                         className='relative flex items-center justify-center transition-colors rounded-full cursor-pointer w-9 h-9 hover:bg-orange-600'>
                             <CiShoppingCart size={26} className='text-white' />
-                            <span className='absolute -top-1 -right-1 w-5 h-5 bg-white text-orange-500 text-[11px] font-bold rounded-full flex items-center justify-center'>
-                                0
-                            </span>
+                            {cartCount > 0 && (
+                                <span className='absolute -top-1 -right-1 w-5 h-5 bg-white text-orange-500 text-[11px] font-bold rounded-full flex items-center justify-center'>
+                                    {cartCount}
+                                </span>
+                            )}
                         </button>
                     )}
 

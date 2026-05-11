@@ -1,8 +1,24 @@
 import React from 'react';
 import { FaStar } from 'react-icons/fa';
+import { useDispatch } from 'react-redux';
+import { addToCart } from '../redux/userSlice';
 
 function FoodCard({ item, shopName }) {
+  const dispatch = useDispatch();
   const ratingValue = item.rating?.average ?? item.rating ?? 0;
+
+  const handleAddToCart = () => {
+    const cartItem = {
+      id: item._id,
+      name: item.name,
+      image: item.image,
+      shop: shopName,
+      price: item.price,
+      quantity: 1,
+      foodType: item.foodType
+    };
+    dispatch(addToCart(cartItem));
+  };
 
   const renderStars = (rating) => {
     const stars = [];
@@ -48,7 +64,7 @@ function FoodCard({ item, shopName }) {
       <p className='font-bold text-[#ff4d2d] mb-2'>₹{item.price}</p>
       <p className='text-sm text-gray-500'>From: {shopName}</p>
       <div className='mt-3'>
-        <button className='w-full py-2 font-semibold text-white bg-[#ff4d2d] rounded-md hover:bg-[#e64527] sm:w-auto px-4'>
+        <button onClick={handleAddToCart} className='w-full py-2 font-semibold text-white bg-[#ff4d2d] rounded-md hover:bg-[#e64527] sm:w-auto px-4'>
           Add Food
         </button>
       </div>
