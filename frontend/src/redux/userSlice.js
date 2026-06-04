@@ -35,6 +35,7 @@ const userSlice = createSlice({
 
         removeFromCart:(state, action)=>{
             state.cartItems = state.cartItems.filter(item => item.id !== action.payload)
+            state.totalAmount = state.cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)
         },
 
         updateCartItemQuantity:(state, action)=>{
@@ -43,14 +44,17 @@ const userSlice = createSlice({
             if(item){
                 if(quantity <= 0){
                     state.cartItems = state.cartItems.filter(item => item.id !== id)
+                    state.totalAmount = state.cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)
                 }else{
                     item.quantity = quantity
+                    state.totalAmount = state.cartItems.reduce((total, item) => total + (item.price * item.quantity), 0)
                 }
             }
         },
 
         clearCart:(state)=>{
             state.cartItems = []
+            state.totalAmount = 0
         }
     }
 })

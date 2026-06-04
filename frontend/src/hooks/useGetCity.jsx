@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import axios from "axios";
 import { useDispatch, useSelector } from 'react-redux';
 import { setLocation } from '../redux/userSlice';
+import { setLocation as setMapLocation, setAddress } from '../redux/mapslice';
 
 function useGetCity() {
   const dispatch = useDispatch();
@@ -11,7 +12,7 @@ function useGetCity() {
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(async (position) => {
       const { latitude, longitude } = position.coords;
-      dispatch(setLocation({ lon: longitude, lat: latitude }));
+      dispatch(setMapLocation({ lon: longitude, lat: latitude }));
       try {
         const response = await axios.get(
           `https://api.geoapify.com/v1/geocode/reverse?lat=${latitude}&lon=${longitude}&format=json&apiKey=${apiKey}`
@@ -20,16 +21,18 @@ function useGetCity() {
         const result = response?.data?.results?.[0] || {};
         const city = result.city || result.properties?.city || '';
         const state = result.state || result.properties?.state || '';
-        const currentAdress = result?.data?.results?.[0]?.address_line1 || '';
+        const address = result?.formatted_address || result?.address_line1 || '';
 
-        dispatch(setLocation({ city, state, currentAdress }));
+        dispatch(setLocation({ city, state }));
+        dispatch(setAddress(address));
          
 
 
       } catch (error) {
         console.error("Failed to fetch city/state:", error);
         // Set default location if API fails
-        dispatch(setLocation({ city: 'Cuttack', state: 'Odisha', currentAdress: '' }));
+        dispatch(setLocation({ city: 'Cuttack', state: 'Odisha' }));
+        dispatch(setAddress(''));
       
       }
 
@@ -37,9 +40,10 @@ function useGetCity() {
     }, (error) => {
       console.error("Geolocation error:", error);
       // Set default location if geolocation fails
-      dispatch(setLocation({ city: 'Cuttack', state: 'Odisha', currentAdress: '' }));
+      dispatch(setLocation({ city: 'Cuttack', state: 'Odisha' }));
+      dispatch(setAddress(''));
     });
-  }, [userData]);
+  }, [userData, dispatch]);
 }
 
 export default useGetCity;
