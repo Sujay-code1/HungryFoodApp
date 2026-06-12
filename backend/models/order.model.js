@@ -34,11 +34,13 @@ const orderSchema = new mongoose.Schema({
          required: true
     },
 
-    deliveryAddress:{
-        text: String,
-        longitude:true,
-        latitude:true,
-         required: true
+    deliveryAddress: {
+        type: {
+            text: String,
+            longitude: Number,
+            latitude: Number,
+        },
+        required: true,
     },
 
     totalAmount: {

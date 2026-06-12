@@ -42,7 +42,13 @@ function SignIn() {
         { withCredentials: true }
       );
 
-      dispatch(setUserData(result.data))
+      const token = result.data?.token
+      if (token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+        localStorage.setItem('token', token)
+      }
+
+      dispatch(setUserData(result.data.user || result.data))
 
       setEmail("");
       setPassword("");
@@ -75,7 +81,13 @@ function SignIn() {
         { withCredentials: true }
       );
 
-      dispatch(setUserData(data))
+      const token = data?.token
+      if (token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+        localStorage.setItem('token', token)
+      }
+
+      dispatch(setUserData(data.user || data))
 
       toast.success("Google Sign-in Successful 🎉");
 

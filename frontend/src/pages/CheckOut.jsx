@@ -145,8 +145,18 @@ function CheckOut() {
     if (cartItems.length === 0) return
     setPlacingOrder(true)
     try {
-      // Optionally send order to server here
-      // await axios.post('/api/orders', { items: cartItems, total: grandTotal, address, paymentMethod })
+      const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000'
+      const payload = {
+        cartItems: cartItems.map(i => ({ itemId: i.id, quantity: i.quantity })),
+        paymentMethod,
+        deliveryAddress: {
+          text: query || address || '',
+          latitude: location?.lat,
+          longitude: location?.lon,
+        }
+      }
+
+      await axios.post(`${API_URL}/api/order`, payload, { withCredentials: true })
       dispatch(clearCart())
       toast.success('Order placed successfully!')
       navigate('/')

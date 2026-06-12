@@ -4,7 +4,11 @@ const isAuth = async(req,res,next)=>{
     try {
 
         console.log("cookies received:", req.cookies)
-        const token = req.cookies.token
+        let token = req.cookies.token
+        // allow Authorization: Bearer <token> as fallback for SPA clients
+        if(!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')){
+            token = req.headers.authorization.split(' ')[1]
+        }
         if(!token){
             return res.status(400).json({message:"token not found"})
         }
