@@ -15,6 +15,8 @@ import EditItem from './pages/EditItem';
 import useGetShopByCity from './hooks/useGetShopByCity';
 import CartPage from './pages/CartPage';
 import CheckOut from './pages/CheckOut';
+import OrderPlaced from './pages/OrderPlaced';
+import MyOrders from './pages/MyOrders';
 
 function App() {
  
@@ -37,8 +39,11 @@ function App() {
      <Route path='/create-edit-shop' element={userData ? <CreateEditShop/>:<Navigate to={"/signin"}/>}/>
      <Route path='/add-item' element={userData ? <AddItem/>:<Navigate to={"/signin"}/>}/>
      <Route path='/edit-item/:id' element={userData ? <EditItem/>:<Navigate to={"/signin"}/>}/>
-     <Route path='/cart' element={userData ? <CartPage/>:<Navigate to={"/signin"}/>}/>
+    <Route path='/cart' element={<CartPage/>}/>
      <Route path='/checkout' element={userData ? <CheckOut/>:<Navigate to={"/signin"}/>}/>
+     <Route path='/order-placed' element={userData ? <OrderPlaced/>:<Navigate to={"/signin"}/>}/>
+     <Route path='/my-orders' element={userData ? <MyOrders/>:<Navigate to={"/signin"}/>}/>
+     
    </Routes>
 
     <ToastContainer position="top-right" autoClose={3000} />

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import axios from 'axios';
 import { serverUrl } from '../config';
@@ -26,6 +26,7 @@ function SignUp() {
   const [loading, setLoading] = useState(false);
 
   const dispatch = useDispatch()
+  const navigate = useNavigate()
 
   // ✅ Validation functions
   const isValidEmail = (email) =>
@@ -81,6 +82,7 @@ function SignUp() {
       setRole("user");
 
       toast.success("Signup Successful 🎉");
+      navigate('/signin');
     } catch (error) {
       toast.error(error.response?.data?.message || "Signup failed ❌");
     } finally {
@@ -115,6 +117,7 @@ function SignUp() {
 
       dispatch(setUserData(data));
       toast.success("Google Signup Successful 🎉");
+      navigate('/signin');
     } catch (error) {
       toast.error(error.response?.data?.message || "Google signup failed ❌");
     }

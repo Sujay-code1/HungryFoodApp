@@ -14,14 +14,15 @@ function useGetCity() {
       const { latitude, longitude } = position.coords;
       dispatch(setMapLocation({ lon: longitude, lat: latitude }));
       try {
-        const response = await axios.get(
-          `https://api.geoapify.com/v1/geocode/reverse?lat=${latitude}&lon=${longitude}&format=json&apiKey=${apiKey}`
-        );
+        const geoUrl = `https://api.geoapify.com/v1/geocode/reverse?lat=${latitude}&lon=${longitude}&format=json&apiKey=${apiKey}`
+        const geoResp = await fetch(geoUrl)
+        if (!geoResp.ok) throw new Error('Geoapify network response not ok')
+        const geoData = await geoResp.json()
 
-        const result = response?.data?.results?.[0] || {};
-        const city = result.city || result.properties?.city || '';
-        const state = result.state || result.properties?.state || '';
-        const address = result?.formatted_address || result?.address_line1 || '';
+        const result = geoData?.results?.[0] || geoData?.features?.[0] || {};
+        const city = result.city || result.properties?.city || result.address?.city || '';
+        const state = result.state || result.properties?.state || result.address?.state || '';
+        const address = result.formatted || result.formatted_address || result.address || result.properties?.formatted || result.properties?.formatted_address || result.address_line1 || '';
 
         dispatch(setLocation({ city, state }));
         dispatch(setAddress(address));

@@ -2,6 +2,8 @@ import React from 'react';
 import { FaStar } from 'react-icons/fa';
 import { useDispatch } from 'react-redux';
 import { addToCart } from '../redux/userSlice';
+import { toast } from 'react-toastify';
+
 
 function FoodCard({ item, shopName }) {
   const dispatch = useDispatch();
@@ -18,6 +20,7 @@ function FoodCard({ item, shopName }) {
       foodType: item.foodType
     };
     dispatch(addToCart(cartItem));
+    toast.success('Added to cart')
   };
 
   const renderStars = (rating) => {

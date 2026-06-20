@@ -55,12 +55,13 @@ function CheckOut() {
   const dispatch = useDispatch()
   const {location, address} = useSelector(state=>state.map)
   const { cartItems = [], totalAmount = 0 } = useSelector(state => state.user)
-  useGetCity()
   const [query, setQuery] = useState(address || '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [paymentMethod, setPaymentMethod] = useState('cod')
   const [placingOrder, setPlacingOrder] = useState(false)
+  const hasValidLocation = location?.lat != null && location?.lon != null
+  const mapCenter = hasValidLocation ? [location.lat, location.lon] : [51.505, -0.09]
 
   // Fees configuration
   const DELIVERY_CHARGE = 30 // flat delivery charge
@@ -83,22 +84,53 @@ function CheckOut() {
 
   const apiKey = import.meta.env.VITE_GEOAPIKEY
 
+  const formatGeoapifyAddress = (result) => {
+    if (!result) return ''
+    const stringValue = (value) => typeof value === 'string' && value.trim() ? value.trim() : ''
+    const addressObj = result.address || result.properties?.address
+    const objAddress = addressObj && typeof addressObj === 'object'
+      ? [addressObj.house_number, addressObj.road, addressObj.suburb, addressObj.city, addressObj.state, addressObj.postcode, addressObj.country].filter(Boolean).join(', ')
+      : ''
+
+    return stringValue(result.formatted)
+      || stringValue(result.formatted_address)
+      || stringValue(result.address)
+      || stringValue(result.properties?.formatted)
+      || stringValue(result.properties?.formatted_address)
+      || stringValue(result.properties?.address_line1)
+      || stringValue(result.properties?.address_line2)
+      || objAddress
+      || stringValue(result.display_name)
+      || stringValue(result.name)
+      || ''
+  }
+
+  const getGeoapifyResult = (data) => {
+    return data?.results?.[0] || data?.features?.[0] || null
+  }
+
   const handleSearch = async () => {
     if (!query) return
+    if (!apiKey) {
+      setError('Missing Geoapify API key')
+      return
+    }
     setLoading(true)
     setError(null)
     try {
-      const resp = await axios.get(
-        `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(query)}&format=json&apiKey=${apiKey}`
-      )
-      const result = resp?.data?.results?.[0]
+      const geoUrl = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(query)}&format=json&apiKey=${apiKey}`
+      const geoResp = await fetch(geoUrl)
+      if (!geoResp.ok) throw new Error('Geoapify network response not ok')
+      const geoData = await geoResp.json()
+      const result = getGeoapifyResult(geoData)
       if (!result) throw new Error('No results')
-      const lat = result.lat || result.y || (result.properties && result.properties.lat)
-      const lon = result.lon || result.x || (result.properties && result.properties.lon)
-      const formatted = result.formatted || result.formatted_address || result.address || result.properties?.formatted || ''
+      const lat = parseFloat(result.lat || result.y || result.properties?.lat || result.geometry?.coordinates?.[1])
+      const lon = parseFloat(result.lon || result.x || result.properties?.lon || result.geometry?.coordinates?.[0])
+      const formatted = formatGeoapifyAddress(result)
       if (lat && lon) {
         dispatch(setLocation({ lon, lat }))
         dispatch(setAddress(formatted))
+        setQuery(formatted)
       } else {
         throw new Error('Invalid coordinates from geocoding')
       }
@@ -110,30 +142,77 @@ function CheckOut() {
     }
   }
 
+  const reverseGeocodeWithNominatim = async (latitude, longitude) => {
+    try {
+      const resp = await axios.get('https://nominatim.openstreetmap.org/reverse', {
+        params: {
+          lat: latitude,
+          lon: longitude,
+          format: 'jsonv2'
+        },
+        headers: {
+          'Accept-Language': 'en',
+          'User-Agent': 'HungryFoodApp/1.0'
+        }
+      })
+      const data = resp?.data || {}
+      return data.display_name || data.name || data.address?.road || data.address?.city || data.address?.county || ''
+    } catch (e) {
+      console.error('Nominatim fallback failed:', e)
+      return ''
+    }
+  }
+
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) {
       setError('Geolocation not supported')
+      return
+    }
+    if (!apiKey) {
+      setError('Missing Geoapify API key')
       return
     }
     setLoading(true)
     setError(null)
     navigator.geolocation.getCurrentPosition(async (pos) => {
       const { latitude, longitude } = pos.coords
+      const fallbackAddress = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
+      let finalAddress = ''
       try {
-        const resp = await axios.get(
-          `https://api.geoapify.com/v1/geocode/reverse?lat=${latitude}&lon=${longitude}&format=json&apiKey=${apiKey}`
-        )
-        const result = resp?.data?.results?.[0] || {}
-        const formatted = result.formatted || result.formatted_address || result.address || result.properties?.formatted || ''
-        dispatch(setLocation({ lon: longitude, lat: latitude }))
-        dispatch(setAddress(formatted))
-        setQuery(formatted)
+        const geoUrl = `https://api.geoapify.com/v1/geocode/reverse?lat=${latitude}&lon=${longitude}&format=json&apiKey=${apiKey}`
+        const geoResp = await fetch(geoUrl)
+        if (!geoResp.ok) throw new Error('Geoapify network response not ok')
+        const geoData = await geoResp.json()
+        const result = getGeoapifyResult(geoData)
+        finalAddress = formatGeoapifyAddress(result)
+        if (!finalAddress) {
+          finalAddress = await reverseGeocodeWithNominatim(latitude, longitude)
+        }
+        if (!finalAddress) {
+          finalAddress = fallbackAddress
+          setError('Location found; using coordinates because address lookup returned no address')
+        } else {
+          setError(null)
+        }
       } catch (err) {
-        console.error(err)
-        setError('Failed to reverse geocode')
-      } finally {
-        setLoading(false)
+        console.error('Geoapify reverse geocode error:', err)
+        finalAddress = await reverseGeocodeWithNominatim(latitude, longitude)
+        if (!finalAddress) {
+          finalAddress = fallbackAddress
+          const status = err?.response?.status
+          if (status === 401 || status === 403) {
+            setError('Geoapify key invalid or quota exceeded; using coordinates instead')
+          } else {
+            setError('Geoapify reverse geocoding failed; using coordinates instead')
+          }
+        } else {
+          setError(null)
+        }
       }
+      dispatch(setLocation({ lon: longitude, lat: latitude }))
+      dispatch(setAddress(finalAddress))
+      setQuery(finalAddress)
+      setLoading(false)
     }, (err) => {
       console.error(err)
       setError('Failed to get current location')
@@ -159,7 +238,7 @@ function CheckOut() {
       await axios.post(`${API_URL}/api/order`, payload, { withCredentials: true })
       dispatch(clearCart())
       toast.success('Order placed successfully!')
-      navigate('/')
+      navigate('/order-placed')
     } catch (err) {
       console.error(err)
       toast.error('Failed to place order')
@@ -192,14 +271,15 @@ function CheckOut() {
             />
 
             <div className='flex gap-2 sm:gap-3 sm:shrink-0'>
-              <button onClick={handleSearch} disabled={loading} className='w-full px-4 py-3 text-white transition-colors bg-red-500 rounded-lg sm:w-auto hover:bg-red-600'>
+              <button type='button' onClick={handleSearch} disabled={loading} className='w-full px-4 py-3 text-white transition-colors bg-red-500 rounded-lg sm:w-auto hover:bg-red-600'>
                 <GoSearch size={18} />
               </button>
-              <button onClick={handleUseMyLocation} disabled={loading} className='w-full px-4 py-3 text-white transition-colors bg-blue-500 rounded-lg sm:w-auto hover:bg-blue-600'>
+              <button type='button' onClick={handleUseMyLocation} disabled={loading} className='w-full px-4 py-3 text-white transition-colors bg-blue-500 rounded-lg sm:w-auto hover:bg-blue-600'>
                 <MdOutlineMyLocation size={18} />
               </button>
             </div>
           </div>
+          {error && <p className='mt-2 text-sm text-red-600'>{error}</p>}
 
            <div className='overflow-hidden border rounded-xl'>
                    <div className='flex items-center justify-center w-full h-64'>
@@ -214,9 +294,9 @@ function CheckOut() {
                           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         />
 
-                        <RecenterOnLocation center={location?.lat && location?.lon ? [location.lat, location.lon] : [51.505, -0.09]} />
+                        <RecenterOnLocation center={mapCenter} />
                         <DraggableMarker
-                          position={location?.lat && location?.lon ? [location.lat, location.lon] : [51.505, -0.09]}
+                          position={mapCenter}
                           onDragEnd={onMarkerDragEnd}
                         />
                       </MapContainer>
