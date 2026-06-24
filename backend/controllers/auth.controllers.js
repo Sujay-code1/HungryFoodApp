@@ -1,6 +1,6 @@
 
 import bcrypt from 'bcryptjs'
-import { User } from "../models/user.model.js"
+import User from "../models/user.model.js"
 import { genToken } from "../utils/token.js";
 import { sentOtpMail } from '../utils/mail.js';
 

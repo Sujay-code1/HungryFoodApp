@@ -17,7 +17,15 @@ const shopOrderSchema = new mongoose.Schema({
 
        subtotal: Number,
 
-       shopOrderItems: [shopOrderItemsSchema]
+       shopOrderItems: [shopOrderItemsSchema],
+
+       status:{
+        type: String, 
+        enum:["pending","preparing", "Out for delivery", "delivered", "cancelled"],
+        default: "pending"
+       }
+
+
 
 },{timestamps:true})
 

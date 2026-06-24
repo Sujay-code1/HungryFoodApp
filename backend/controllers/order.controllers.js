@@ -1,6 +1,7 @@
 import Order from '../models/order.model.js'
 import Item from '../models/item.model.js'
 import Shop from '../models/shop.model.js'
+import User from '../models/user.model.js'
 
 export const placeOrder = async (req, res) => {
     try {
@@ -73,4 +74,42 @@ export const placeOrder = async (req, res) => {
         return res.status(500).json({ message: 'Internal server error' })
     }
 }
+
+export const getUserOrders = async (req, res) => {
+    try {
+        const userId = req.userid              // ← was req.userId
+        const user = await User.findById(userId)
+        if (!user) return res.status(404).json({ message: 'User not found' })
+
+        if (user.role === 'user') {
+            const orders = await Order.find({ user: userId })
+                .sort({ createdAt: -1 })
+                .populate("shopOrder.shop", "name")              // ← shopOrder, not shopOrders
+                .populate("shopOrder.owner", "name email number")
+                .populate("shopOrder.shopOrderItems.item", "name image price")
+            return res.json(orders)
+        } else {
+            return res.status(403).json({ message: 'Not authorized for this route' })
+        }
+    } catch (error) {
+        return res.status(500).json({ message: "Get User Order Error" })
+    }
+}
+
+export const getOwnerOrders = async (req, res) => {
+    try {
+        const userId = req.userid
+        const orders = await Order.find({ "shopOrder.owner": userId })
+            .sort({ createdAt: -1 })
+            .populate("shopOrder.shop", "name")
+            .populate("shopOrder.owner", "name email number")
+            .populate("shopOrder.shopOrderItems.item", "name image price")
+        return res.json(orders)
+    } catch (error) {
+        return res.status(500).json({ message: "Get Owner Order Error" })
+    }
+}
+
+
+    
 

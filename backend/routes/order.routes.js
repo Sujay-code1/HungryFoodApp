@@ -1,9 +1,11 @@
 import express from 'express'
 import isAuth from '../middlewares/isAuth.js'
-import { placeOrder } from '../controllers/order.controllers.js'
+import { placeOrder, getUserOrders, getOwnerOrders } from '../controllers/order.controllers.js'
 
 const router = express.Router()
 
-router.post('/', isAuth, placeOrder)
+router.post('/place-order', isAuth, placeOrder)
+router.get('/user-orders', isAuth, getUserOrders)
+router.get('/owner-orders', isAuth, getOwnerOrders)
 
 export default router

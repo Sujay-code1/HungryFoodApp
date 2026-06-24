@@ -235,7 +235,7 @@ function CheckOut() {
         }
       }
 
-      await axios.post(`${API_URL}/api/order`, payload, { withCredentials: true })
+      await axios.post(`${API_URL}/api/order/place-order`, payload, { withCredentials: true })
       dispatch(clearCart())
       toast.success('Order placed successfully!')
       navigate('/order-placed')

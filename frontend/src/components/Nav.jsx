@@ -110,7 +110,10 @@ function Nav() {
 
                     {/* Owner orders with receipt icon */}
                     {userData?.role === 'owner' && (
-                        <button className='flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs md:text-sm font-semibold transition-colors cursor-pointer'>
+                        <button 
+                         onClick={() => navigate('/my-orders')}
+                            className='flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs md:text-sm font-semibold transition-colors cursor-pointer'
+                        >
                             <MdReceipt size={18} />
                             <span>Orders</span>
                             <span className='inline-flex items-center justify-center w-5 h-5 md:w-6 md:h-6 text-[10px] md:text-xs font-bold text-white bg-orange-500 rounded-full'>
@@ -121,7 +124,9 @@ function Nav() {
 
                     {/* My Orders - desktop only */}
                     {userData?.role !== 'owner' && (
-                        <button className='hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-semibold transition-colors cursor-pointer'>
+                        <button 
+                        onClick={()=>navigate('/my-orders')}
+                        className='hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-semibold transition-colors cursor-pointer'>
                             My Orders
                         </button>
                     )}
@@ -156,7 +161,9 @@ function Nav() {
                                 </div>
 
                                 {userData?.role !== 'owner' && (
-                                     <div className='text-[#ff4d2d] font-semibold cursor-pointer hover:opacity-70'>
+                                     <div
+                                     onClick={()=>navigate('/my-orders')}
+                                      className='text-[#ff4d2d] font-semibold cursor-pointer hover:opacity-70'>
                                     My Order
                                 </div>
                                 )}

@@ -18,12 +18,16 @@ function useGetCurrentUser() {
         dispatch(setUserData(result.data))
         
       } catch (error) {
+        if (error.response?.status === 400 || error.response?.status === 401) {
+          // User not authenticated, this is expected
+          return;
+        }
         console.log("Error fetching user:", error);
       }
     };
 
     fetchUser();
-  }, []);
+  }, [dispatch]);
 }
 
 export default useGetCurrentUser;

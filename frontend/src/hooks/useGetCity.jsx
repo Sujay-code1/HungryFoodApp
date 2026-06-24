@@ -15,9 +15,8 @@ function useGetCity() {
       dispatch(setMapLocation({ lon: longitude, lat: latitude }));
       try {
         const geoUrl = `https://api.geoapify.com/v1/geocode/reverse?lat=${latitude}&lon=${longitude}&format=json&apiKey=${apiKey}`
-        const geoResp = await fetch(geoUrl)
-        if (!geoResp.ok) throw new Error('Geoapify network response not ok')
-        const geoData = await geoResp.json()
+        const geoResp = await axios.get(geoUrl)
+        const geoData = geoResp.data
 
         const result = geoData?.results?.[0] || geoData?.features?.[0] || {};
         const city = result.city || result.properties?.city || result.address?.city || '';
