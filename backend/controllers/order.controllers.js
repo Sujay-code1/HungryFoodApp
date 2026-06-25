@@ -85,7 +85,7 @@ export const getUserOrders = async (req, res) => {
             const orders = await Order.find({ user: userId })
                 .sort({ createdAt: -1 })
                 .populate("shopOrder.shop", "name")              // ← shopOrder, not shopOrders
-                .populate("shopOrder.owner", "name email number")
+                .populate("shopOrder.owner", "fullName email mobile")
                 .populate("shopOrder.shopOrderItems.item", "name image price")
             return res.json(orders)
         } else {
@@ -101,8 +101,9 @@ export const getOwnerOrders = async (req, res) => {
         const userId = req.userid
         const orders = await Order.find({ "shopOrder.owner": userId })
             .sort({ createdAt: -1 })
+            .populate("user", "fullName email mobile")
             .populate("shopOrder.shop", "name")
-            .populate("shopOrder.owner", "name email number")
+            .populate("shopOrder.owner", "fullName email mobile")
             .populate("shopOrder.shopOrderItems.item", "name image price")
         return res.json(orders)
     } catch (error) {
@@ -110,6 +111,34 @@ export const getOwnerOrders = async (req, res) => {
     }
 }
 
+export const updateShopOrderStatus = async (req, res) => {
+    try {
+        const ownerId = req.userid
+        const { orderId, shopOrderId } = req.params
+        const { status } = req.body
 
-    
+        const validStatuses = ['pending', 'preparing', 'Out for delivery', 'delivered', 'cancelled']
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ message: 'Invalid status' })
+        }
 
+        const order = await Order.findById(orderId)
+        if (!order) return res.status(404).json({ message: 'Order not found' })
+
+        const shopOrd = order.shopOrder.id(shopOrderId)
+        if (!shopOrd) return res.status(404).json({ message: 'Shop order not found' })
+
+        // Ensure this owner owns that sub-order
+        if (shopOrd.owner?.toString() !== ownerId?.toString()) {
+            return res.status(403).json({ message: 'Forbidden' })
+        }
+
+        shopOrd.status = status
+        await order.save()
+
+        return res.json({ message: 'Status updated', status })
+    } catch (error) {
+        console.error('updateShopOrderStatus error:', error)
+        return res.status(500).json({ message: 'Internal server error' })
+    }
+}
