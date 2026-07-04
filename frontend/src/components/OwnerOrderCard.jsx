@@ -24,6 +24,7 @@ const CoinIcon     = () => <svg width="14" height="14" viewBox="0 0 24 24" fill=
 const ChevronIcon  = ({ open }) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.25s ease' }}><polyline points="6 9 12 15 18 9"/></svg>
 
 function OwnerOrderCard({ data, shopOrderIndex = 0 }) {
+  const [availableBoys, setAvailableBoys] = useState([])
   const dispatch  = useDispatch()
   const { myOrders } = useSelector(s => s.user)
 
@@ -34,6 +35,7 @@ function OwnerOrderCard({ data, shopOrderIndex = 0 }) {
   const [expanded, setExpanded]     = useState(true)
   const [updating, setUpdating]     = useState(false)
   const [dropOpen, setDropOpen]     = useState(false)
+  const hasAssignedDeliveryBoy = Boolean(shopOrd?.assignedDeliveryBoy)
 
   /* Time & Date display */
   const orderDate  = new Date(data.createdAt)
@@ -51,7 +53,7 @@ function OwnerOrderCard({ data, shopOrderIndex = 0 }) {
     setUpdating(true)
     setDropOpen(false)
     try {
-      await axios.patch(
+      const result = await axios.patch(
         `${serverUrl}/api/order/${data._id}/shop-order/${shopOrd._id}/status`,
         { status: newStatus },
         { withCredentials: true }
@@ -62,11 +64,20 @@ function OwnerOrderCard({ data, shopOrderIndex = 0 }) {
         return {
           ...ord,
           shopOrder: ord.shopOrder.map(so =>
-            so._id === shopOrd._id ? { ...so, status: newStatus } : so
+            so._id === shopOrd._id
+              ? {
+                  ...so,
+                  status: newStatus,
+                  assignedDeliveryBoy: result.data?.assignedDeliveryBoy || so.assignedDeliveryBoy,
+                  assignment: result.data?.assignment || so.assignment,
+                }
+              : so
           ),
         }
       })
       dispatch(setMyOrders(updated))
+      setAvailableBoys(result.data?.deliveryBoys || [])
+      console.log(result.data)
     } catch (err) {
       console.error('Status update failed:', err)
     } finally {
@@ -209,6 +220,56 @@ function OwnerOrderCard({ data, shopOrderIndex = 0 }) {
                 </div>
               </div>
             )}
+
+            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100/80 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Delivery Boy Details</p>
+                <span className="text-[10px] font-semibold text-slate-500 uppercase">{hasAssignedDeliveryBoy ? 'Assigned' : availableBoys.length ? 'Available' : 'Pending'}</span>
+              </div>
+
+              {hasAssignedDeliveryBoy && typeof shopOrd.assignedDeliveryBoy === 'object' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="flex items-center gap-2 text-sm text-slate-700">
+                    <span className="text-slate-400"><PersonIcon /></span>
+                    <div>
+                      <p className="font-semibold text-slate-800">{shopOrd.assignedDeliveryBoy.fullName || 'Delivery Boy'}</p>
+                      <p className="text-xs text-slate-500">Assigned delivery person</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <span className="text-slate-400"><MailIcon /></span>
+                    <span className="truncate">{shopOrd.assignedDeliveryBoy.email || 'No email'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <span className="text-slate-400"><PhoneIcon /></span>
+                    <span className="font-mono">{shopOrd.assignedDeliveryBoy.mobile || 'No number'}</span>
+                  </div>
+                </div>
+              ) : hasAssignedDeliveryBoy ? (
+                <p className="text-xs text-slate-600">Delivery boy assigned successfully.</p>
+              ) : availableBoys.length > 0 ? (
+                <div className="space-y-2">
+                  {availableBoys.map((boy, index) => (
+                    <div key={boy.id || index} className="p-3 rounded-2xl border border-slate-200 bg-white">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-slate-800">{boy.name || 'Delivery Boy'}</p>
+                        <span className="text-[10px] uppercase text-slate-500">Candidate</span>
+                      </div>
+                      <div className="mt-2 grid gap-1 text-xs text-slate-600">
+                        {boy.mobile && (
+                          <div className="flex items-center gap-2"><PhoneIcon /><span>{boy.mobile}</span></div>
+                        )}
+                        {boy.email && (
+                          <div className="flex items-center gap-2"><MailIcon /><span>{boy.email}</span></div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">No delivery boy assigned yet.</p>
+              )}
+            </div>
           </div>
         )}
 

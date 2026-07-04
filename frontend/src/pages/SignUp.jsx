@@ -62,7 +62,7 @@ function SignUp() {
     try {
       setLoading(true);
 
-      const result = await axios.post(
+      await axios.post(
         `${serverUrl}/api/auth/signup`,
         {
           fullName,
@@ -74,7 +74,6 @@ function SignUp() {
         { withCredentials: true }
       );
 
-      dispatch(setUserData(result.data));
       setFullName("");
       setEmail("");
       setPassword("");
@@ -104,7 +103,7 @@ function SignUp() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
 
-      const { data } = await axios.post(
+      await axios.post(
         `${serverUrl}/api/auth/google-auth`,
         {
           fullName: result.user.displayName,
@@ -115,7 +114,6 @@ function SignUp() {
         { withCredentials: true }
       );
 
-      dispatch(setUserData(data));
       toast.success("Google Signup Successful 🎉");
       navigate('/signin');
     } catch (error) {

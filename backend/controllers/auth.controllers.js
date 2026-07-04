@@ -40,15 +40,7 @@ export const signUp = async (req, res) => {
          password: hashedPassword
       })
 
-      const token = await genToken(user._id)
-      res.cookie("token", token, {
-         secure: false,
-         sameSite: "lax",
-         maxAge: 7 * 24 * 60 * 60 * 1000,
-         httpOnly: true
-      })
-
-      return res.status(201).json({ user, token })
+      return res.status(201).json({ user })
    } catch (error) {
       return res.status(500).json(`sign up error ${error}`)
    }

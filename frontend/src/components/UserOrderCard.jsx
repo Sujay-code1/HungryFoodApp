@@ -1,6 +1,7 @@
 import React from 'react'
 import { MdAccessTime, MdLocationOn } from 'react-icons/md'
 import { BsCashCoin } from 'react-icons/bs'
+import { FaMotorcycle } from 'react-icons/fa'
 
 const STATUS_STYLES = {
   pending:           'bg-slate-100 text-slate-600 border-slate-200',
@@ -185,6 +186,29 @@ function UserOrderCard({ data }) {
                 )
               })}
             </div>
+
+            {/* Delivery boy info */}
+            {shopOrd.assignedDeliveryBoy ? (
+              <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-3 space-y-1.5">
+                <div className="flex items-center gap-2 text-orange-600">
+                  <FaMotorcycle size={15} />
+                  <p className="text-[10px] font-bold uppercase tracking-wider">Delivery Partner</p>
+                </div>
+                <div className="text-sm text-slate-700">
+                  <p className="font-bold">{shopOrd.assignedDeliveryBoy.fullName || 'Delivery Boy'}</p>
+                  {shopOrd.assignedDeliveryBoy.mobile && (
+                    <p className="text-xs text-slate-500">{shopOrd.assignedDeliveryBoy.mobile}</p>
+                  )}
+                  {shopOrd.assignedDeliveryBoy.email && (
+                    <p className="text-xs text-slate-500">{shopOrd.assignedDeliveryBoy.email}</p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
+                <p className="text-xs text-slate-500">Delivery partner will be assigned soon.</p>
+              </div>
+            )}
 
             {/* Subtotal */}
             <div className="flex justify-end pt-1">

@@ -8,7 +8,6 @@ import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import {useSelector, useDispatch} from 'react-redux'
 import CartItemCard from '../components/CartItemCard'
-import useGetCity from '../hooks/useGetCity';
 import axios from 'axios'
 import { setLocation, setAddress } from '../redux/mapslice'
 import { toast } from 'react-toastify'
@@ -168,54 +167,47 @@ function CheckOut() {
       setError('Geolocation not supported')
       return
     }
-    if (!apiKey) {
-      setError('Missing Geoapify API key')
-      return
-    }
+
     setLoading(true)
     setError(null)
+
     navigator.geolocation.getCurrentPosition(async (pos) => {
       const { latitude, longitude } = pos.coords
       const fallbackAddress = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
       let finalAddress = ''
+
       try {
-        const geoUrl = `https://api.geoapify.com/v1/geocode/reverse?lat=${latitude}&lon=${longitude}&format=json&apiKey=${apiKey}`
-        const geoResp = await fetch(geoUrl)
-        if (!geoResp.ok) throw new Error('Geoapify network response not ok')
-        const geoData = await geoResp.json()
-        const result = getGeoapifyResult(geoData)
-        finalAddress = formatGeoapifyAddress(result)
+        if (apiKey) {
+          const geoUrl = `https://api.geoapify.com/v1/geocode/reverse?lat=${latitude}&lon=${longitude}&format=json&apiKey=${apiKey}`
+          const geoResp = await fetch(geoUrl)
+          if (!geoResp.ok) throw new Error('Geoapify network response not ok')
+          const geoData = await geoResp.json()
+          const result = getGeoapifyResult(geoData)
+          finalAddress = formatGeoapifyAddress(result)
+        }
+
         if (!finalAddress) {
           finalAddress = await reverseGeocodeWithNominatim(latitude, longitude)
         }
+
         if (!finalAddress) {
           finalAddress = fallbackAddress
-          setError('Location found; using coordinates because address lookup returned no address')
-        } else {
-          setError(null)
         }
       } catch (err) {
-        console.error('Geoapify reverse geocode error:', err)
+        console.error('Reverse geocode error:', err)
         finalAddress = await reverseGeocodeWithNominatim(latitude, longitude)
         if (!finalAddress) {
           finalAddress = fallbackAddress
-          const status = err?.response?.status
-          if (status === 401 || status === 403) {
-            setError('Geoapify key invalid or quota exceeded; using coordinates instead')
-          } else {
-            setError('Geoapify reverse geocoding failed; using coordinates instead')
-          }
-        } else {
-          setError(null)
         }
+      } finally {
+        dispatch(setLocation({ lon: longitude, lat: latitude }))
+        dispatch(setAddress(finalAddress))
+        setQuery(finalAddress)
+        setLoading(false)
       }
-      dispatch(setLocation({ lon: longitude, lat: latitude }))
-      dispatch(setAddress(finalAddress))
-      setQuery(finalAddress)
-      setLoading(false)
     }, (err) => {
       console.error(err)
-      setError('Failed to get current location')
+      setError('Failed to get current location. Please allow location access and try again.')
       setLoading(false)
     })
   }
