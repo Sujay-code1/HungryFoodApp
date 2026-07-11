@@ -59,7 +59,7 @@ function Nav() {
                
 
                 {/* Search bar - desktop only */}
-                {userData?.role !== 'owner' && (
+                {userData?.role === 'user' && (
                     <div className='md:w-[60%] lg:w-[38%] h-[80%] bg-white rounded-lg items-center gap-[20px] md:flex hidden'>
                         <div className='flex items-center w-[30%] overflow-hidden gap-[10px] px-[10px] border-r-[2px] border-gray-400'>
                             <IoLocationSharp size={25} className='text-[#ff4d2d]' />
@@ -85,7 +85,7 @@ function Nav() {
                 <div className='flex items-center gap-5 md:gap-5'>
 
                     {/* Mobile search toggle button */}
-                    {userData?.role !== 'owner' && (
+                    {userData?.role === 'user' && (
                         <button
                             onClick={() => setShowMobileSearch(prev => !prev)}
                             className='flex items-center justify-center transition-colors rounded-full cursor-pointer md:hidden w-9 h-9 hover:bg-orange-600'
@@ -108,22 +108,24 @@ function Nav() {
                         </button>
                     )}
 
-                    {/* Owner orders with receipt icon */}
-                    {userData?.role === 'owner' && (
+                    {/* Orders button for owners and delivery boys */}
+                    {userData?.role === 'owner' || userData?.role === 'deliveryBoy' ? (
                         <button 
                          onClick={() => navigate('/my-orders')}
                             className='flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs md:text-sm font-semibold transition-colors cursor-pointer'
                         >
                             <MdReceipt size={18} />
                             <span>Orders</span>
-                            <span className='inline-flex items-center justify-center w-5 h-5 md:w-6 md:h-6 text-[10px] md:text-xs font-bold text-white bg-orange-500 rounded-full'>
-                                {ownerOrderCount}
-                            </span>
+                            {userData?.role === 'owner' && (
+                                <span className='inline-flex items-center justify-center w-5 h-5 md:w-6 md:h-6 text-[10px] md:text-xs font-bold text-white bg-orange-500 rounded-full'>
+                                    {ownerOrderCount}
+                                </span>
+                            )}
                         </button>
-                    )}
+                    ) : null}
 
                     {/* My Orders - desktop only */}
-                    {userData?.role !== 'owner' && (
+                    {userData?.role === 'user' && (
                         <button 
                         onClick={()=>navigate('/my-orders')}
                         className='hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-semibold transition-colors cursor-pointer'>
@@ -132,7 +134,7 @@ function Nav() {
                     )}
 
                     {/* Cart */}
-                    {userData?.role !== 'owner' && (
+                    {userData?.role === 'user' && (
                         <button
                         onClick={() => navigate('/cart')}
                          className='relative flex items-center justify-center transition-colors rounded-full cursor-pointer w-9 h-9 hover:bg-orange-600'>
@@ -181,7 +183,7 @@ function Nav() {
             </div>
 
             {/* Mobile search bar — slides in below navbar */}
-            {userData?.role !== 'owner' && (
+            {userData?.role === 'user' && (
                 <div className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${showMobileSearch ? 'max-h-[70px] opacity-100' : 'max-h-0 opacity-0'}`}>
                     <div className='flex items-center gap-3 px-4 py-3 bg-orange-400'>
                         <div className='flex items-center flex-1 gap-3 bg-white rounded-lg px-3 h-[42px]'>

@@ -247,3 +247,27 @@ export const updateShopOrderStatus = async (req, res) => {
         return res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+export const getDeliveryBoyAssignment = async(req, res)=>{
+    try{
+         const deliveryBoyId = req.userid
+         const assignments = await DeliveryAssignment.find({
+            broadcastedTo: deliveryBoyId,
+            status: 'broadcasted'
+         })
+         .populate("order")
+         .populate("shop", "name")
+
+         const formatted = assignments.map(a => ({
+            orderId: a.order?._id,
+            shopName: a.shop?.name,
+            deliveryAddress: a.order?.deliveryAddress,
+            items: a.order?.shopOrder?.find(so => so._id.toString() === a.shopOrderId.toString())?.shopOrderItems || [],
+            subTotal: a.order?.shopOrder?.find(so => so._id.toString() === a.shopOrderId.toString())?.subtotal || 0,
+         }))
+         return res.status(200).json({ assignments: formatted });
+    } catch(error){
+        console.error('getDeliveryBoyAssignment error:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}

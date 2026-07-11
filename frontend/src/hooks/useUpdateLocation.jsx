@@ -13,7 +13,7 @@ function useUpdateLocation() {
     const updateLocation = async (lat, lon) => {
       try {
         const result = await axios.post(
-          `${serverUrl}/user/update-location`,
+          `${serverUrl}/api/user/update-location`,
           {
             lat: lat,
             lon: lon

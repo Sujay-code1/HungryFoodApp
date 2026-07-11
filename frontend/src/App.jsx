@@ -19,6 +19,7 @@ import OrderPlaced from './pages/OrderPlaced';
 import MyOrders from './pages/MyOrders';
 import useGetMyOrders from './hooks/useGetMyOrders';
 import useUpdateLocation from './hooks/useUpdateLocation';
+import DeliveryBoy from './pages/DeliveryBoy';
 
 function App() {
  
@@ -46,10 +47,10 @@ function App() {
      <Route path='/checkout' element={userData ? <CheckOut/>:<Navigate to={"/signin"}/>}/>
      <Route path='/order-placed' element={userData ? <OrderPlaced/>:<Navigate to={"/signin"}/>}/>
      <Route path='/my-orders' element={userData ? <MyOrders/>:<Navigate to={"/signin"}/>}/>
-     
+     <Route path='/delivery-boy' element={userData ? <DeliveryBoy/>:<Navigate to={"/signin"}/>}/>
    </Routes>
 
-    <ToastContainer position="top-right" autoClose={3000} />
+    <ToastContainer position="bottom-right" autoClose={3000} />
 
     </>
   )
