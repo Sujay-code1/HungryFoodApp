@@ -17,9 +17,10 @@ import CartPage from './pages/CartPage';
 import CheckOut from './pages/CheckOut';
 import OrderPlaced from './pages/OrderPlaced';
 import MyOrders from './pages/MyOrders';
+import DeliveryOrders from './pages/DeliveryOrders';
 import useGetMyOrders from './hooks/useGetMyOrders';
 import useUpdateLocation from './hooks/useUpdateLocation';
-import DeliveryBoy from './pages/DeliveryBoy';
+import DeliveryBoyPage from './pages/DeliveryBoy';
 
 function App() {
  
@@ -47,7 +48,8 @@ function App() {
      <Route path='/checkout' element={userData ? <CheckOut/>:<Navigate to={"/signin"}/>}/>
      <Route path='/order-placed' element={userData ? <OrderPlaced/>:<Navigate to={"/signin"}/>}/>
      <Route path='/my-orders' element={userData ? <MyOrders/>:<Navigate to={"/signin"}/>}/>
-     <Route path='/delivery-boy' element={userData ? <DeliveryBoy/>:<Navigate to={"/signin"}/>}/>
+     <Route path='/delivery-orders' element={userData ? <DeliveryOrders/>:<Navigate to={"/signin"}/>}/>
+     <Route path='/delivery-boy' element={userData ? <DeliveryBoyPage/>:<Navigate to={"/signin"}/>}/>
    </Routes>
 
     <ToastContainer position="bottom-right" autoClose={3000} />

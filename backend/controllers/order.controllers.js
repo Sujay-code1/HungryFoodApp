@@ -31,24 +31,20 @@ const assignDeliveryBoyToShopOrder = async (order, shopOrder) => {
         }
     }
 
-    const preferredBoy = candidateBoys.find(b => /ashok\s+sharma/i.test(b.fullName || '')) || candidateBoys[0]
-
     const deliveryAssignment = await DeliveryAssignment.create({
         order: order._id,
         shop: shopOrder.shop,
         shopOrderId: shopOrder._id,
         broadcastedTo: candidateBoys.map(b => b._id),
-        assignedTo: preferredBoy._id,
-        status: 'assigned',
-        assignedAt: new Date(),
+        assignedTo: null,
+        status: 'broadcasted',
+        assignedAt: null,
     })
 
-    shopOrder.assignedDeliveryBoy = preferredBoy._id
     shopOrder.assignment = deliveryAssignment._id
 
     return {
         deliveryAssignment,
-        assignedBoy: preferredBoy,
         deliveryBoys: candidateBoys.map(b => ({
             id: b._id,
             name: b.fullName,
@@ -179,7 +175,7 @@ export const getOwnerOrders = async (req, res) => {
 
 export const updateShopOrderStatus = async (req, res) => {
     try {
-        const ownerId = req.userid;
+        const currentUserId = req.userid;
         const { orderId, shopOrderId } = req.params;
         const { status } = req.body;
 
@@ -205,24 +201,47 @@ export const updateShopOrderStatus = async (req, res) => {
             return res.status(404).json({ message: 'Shop order not found' });
         }
 
-        // Ensure this owner owns that sub-order
-        if (shopOrder.owner?.toString() !== ownerId?.toString()) {
+        const isOwner = shopOrder.owner?.toString() === currentUserId?.toString();
+        let assignment = null;
+
+        if (shopOrder.assignment) {
+            assignment = await DeliveryAssignment.findById(shopOrder.assignment);
+        }
+
+        const isDeliveryBoyForAssignment = Boolean(
+            assignment && assignment.broadcastedTo?.some((id) => id?.toString() === currentUserId?.toString())
+        );
+
+        if (!isOwner && !isDeliveryBoyForAssignment) {
             return res.status(403).json({ message: 'Forbidden' });
         }
 
         shopOrder.status = status;
         let deliveryBoyPayload = [];
-        if (status === 'Out for delivery' || !shopOrder.assignment) {
-            const assignmentResult = await assignDeliveryBoyToShopOrder(order, shopOrder)
 
-            if (!assignmentResult) {
-                await order.save();
-                return res.status(200).json({
-                    message: 'order status updated but there is no available delivery boys'
-                })
+        if (status === 'Out for delivery') {
+            if (isOwner) {
+                if (!shopOrder.assignment) {
+                    const assignmentResult = await assignDeliveryBoyToShopOrder(order, shopOrder)
+
+                    if (!assignmentResult) {
+                        await order.save();
+                        await shopOrder.save();
+                        return res.status(200).json({
+                            message: 'order status updated but there is no available delivery boys'
+                        })
+                    }
+
+                    deliveryBoyPayload = assignmentResult.deliveryBoys
+                    assignment = assignmentResult.deliveryAssignment
+                }
+            } else if (assignment) {
+                assignment.status = 'assigned';
+                assignment.assignedTo = currentUserId;
+                assignment.assignedAt = new Date();
+                await assignment.save();
+                shopOrder.assignedDeliveryBoy = currentUserId;
             }
-
-            deliveryBoyPayload = assignmentResult.deliveryBoys
         }
 
         await order.save();
@@ -252,16 +271,23 @@ export const getDeliveryBoyAssignment = async(req, res)=>{
     try{
          const deliveryBoyId = req.userid
          const assignments = await DeliveryAssignment.find({
-            broadcastedTo: deliveryBoyId,
-            status: 'broadcasted'
+            $or: [
+                { broadcastedTo: deliveryBoyId, status: 'broadcasted' },
+                { assignedTo: deliveryBoyId, status: 'assigned' }
+            ]
          })
-         .populate("order")
+         .populate({
+            path: 'order',
+            populate: { path: 'user', select: 'fullName email mobile' }
+         })
          .populate("shop", "name")
 
          const formatted = assignments.map(a => ({
-            orderId: a.order?._id,
+            orderId: a.order?._id?.toString(),
+            shopOrderId: a.shopOrderId?.toString(),
             shopName: a.shop?.name,
-            deliveryAddress: a.order?.deliveryAddress,
+            customerName: a.order?.user?.fullName || 'Customer',
+            deliveryAddress: a.order?.deliveryAddress?.text || a.order?.deliveryAddress || 'No address provided',
             items: a.order?.shopOrder?.find(so => so._id.toString() === a.shopOrderId.toString())?.shopOrderItems || [],
             subTotal: a.order?.shopOrder?.find(so => so._id.toString() === a.shopOrderId.toString())?.subtotal || 0,
          }))
