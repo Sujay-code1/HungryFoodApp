@@ -1,8 +1,7 @@
-import jwt from "jsonwebtoken"
+import jwt from 'jsonwebtoken'
+
 export const genToken = (userId) => {
-  return jwt.sign(
-    { id: userId },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
-};
+  const secret = process.env.JWT_SECRET || 'dev_secret'
+  if (!process.env.JWT_SECRET) console.warn('WARNING: JWT_SECRET not set — using dev fallback')
+  return jwt.sign({ id: userId }, secret, { expiresIn: '7d' })
+}

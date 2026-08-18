@@ -3,6 +3,7 @@ import Item from '../models/item.model.js'
 import Shop from '../models/shop.model.js'
 import User from '../models/user.model.js'
 import DeliveryAssignment from '../models/deliveryAssignment.model.js'
+import axios from 'axios'
 
 const assignDeliveryBoyToShopOrder = async (order, shopOrder) => {
     const { longitude, latitude } = order.deliveryAddress || {}
@@ -219,23 +220,21 @@ export const updateShopOrderStatus = async (req, res) => {
         shopOrder.status = status;
         let deliveryBoyPayload = [];
 
-        if (status === 'Out for delivery') {
+        if (status === 'Out for delivery' || status === 'preparing') {
             if (isOwner) {
                 if (!shopOrder.assignment) {
                     const assignmentResult = await assignDeliveryBoyToShopOrder(order, shopOrder)
 
-                    if (!assignmentResult) {
-                        await order.save();
-                        await shopOrder.save();
-                        return res.status(200).json({
-                            message: 'order status updated but there is no available delivery boys'
-                        })
+                    if (assignmentResult) {
+                        deliveryBoyPayload = assignmentResult.deliveryBoys
+                        assignment = assignmentResult.deliveryAssignment
                     }
-
-                    deliveryBoyPayload = assignmentResult.deliveryBoys
-                    assignment = assignmentResult.deliveryAssignment
                 }
-            } else if (assignment) {
+            }
+        }
+
+        if (status === 'Out for delivery') {
+            if (!isOwner && assignment) {
                 assignment.status = 'assigned';
                 assignment.assignedTo = currentUserId;
                 assignment.assignedAt = new Date();
@@ -244,8 +243,14 @@ export const updateShopOrderStatus = async (req, res) => {
             }
         }
 
+        if (status === 'delivered') {
+            if (assignment) {
+                assignment.status = 'completed';
+                await assignment.save();
+            }
+        }
+
         await order.save();
-        await shopOrder.save()
 
         await order.populate('shopOrder.shop', 'name')
             .populate('shopOrder.owner', 'fullName email mobile')
@@ -278,22 +283,157 @@ export const getDeliveryBoyAssignment = async(req, res)=>{
          })
          .populate({
             path: 'order',
-            populate: { path: 'user', select: 'fullName email mobile' }
+            populate: [
+               { path: 'user', select: 'fullName email mobile' },
+               { path: 'shopOrder.shopOrderItems.item', select: 'name price image' }
+            ]
          })
          .populate("shop", "name")
 
-         const formatted = assignments.map(a => ({
-            orderId: a.order?._id?.toString(),
-            shopOrderId: a.shopOrderId?.toString(),
-            shopName: a.shop?.name,
-            customerName: a.order?.user?.fullName || 'Customer',
-            deliveryAddress: a.order?.deliveryAddress?.text || a.order?.deliveryAddress || 'No address provided',
-            items: a.order?.shopOrder?.find(so => so._id.toString() === a.shopOrderId.toString())?.shopOrderItems || [],
-            subTotal: a.order?.shopOrder?.find(so => so._id.toString() === a.shopOrderId.toString())?.subtotal || 0,
-         }))
+         const formatted = assignments.map(a => {
+            const shopOrder = a.order?.shopOrder?.find(so => so._id && a.shopOrderId && so._id.toString() === a.shopOrderId.toString());
+            // include numeric customer coordinates if available to avoid client-side geocoding
+            const custLat = a.order?.deliveryAddress?.latitude ?? null
+            const custLon = a.order?.deliveryAddress?.longitude ?? null
+            // include assigned delivery boy location if assigned
+            let assignedDeliveryBoyLocation = null
+            if (a.assignedTo && a.assignedTo.location && a.assignedTo.location.coordinates && a.assignedTo.location.coordinates.length === 2) {
+                assignedDeliveryBoyLocation = {
+                    lat: a.assignedTo.location.coordinates[1],
+                    lon: a.assignedTo.location.coordinates[0]
+                }
+            }
+
+                return {
+                    _id: a._id,
+                    orderId: a.order?._id?.toString(),
+                    shopOrderId: a.shopOrderId?.toString(),
+                    shopName: a.shop?.name,
+                    customerName: a.order?.user?.fullName || 'Customer',
+                    deliveryAddress: a.order?.deliveryAddress?.text || a.order?.deliveryAddress || 'No address provided',
+                    customerLocation: { lat: custLat, lon: custLon },
+                    assignedDeliveryBoyLocation,
+                    items: shopOrder?.shopOrderItems || [],
+                    subTotal: shopOrder?.subtotal || 0,
+                    orderStatus: shopOrder?.status || 'pending',
+                    assignmentStatus: a.status
+                };
+         })
          return res.status(200).json({ assignments: formatted });
     } catch(error){
         console.error('getDeliveryBoyAssignment error:', error);
         return res.status(500).json({ message: 'Internal server error' });
     }
 }
+
+export const acceptOrder = async (req, res)=>{
+    try {
+        const { assignmentId } = req.params
+        const assignment = await DeliveryAssignment.findById(assignmentId)
+        if (!assignment) return res.status(400).json({ message: 'No assignment received' })
+        if (assignment.status !== 'broadcasted') return res.status(400).json({ message: 'assignment expired' })
+
+        const deliveryBoyId = req.userid
+        const alreadyAssigned = await DeliveryAssignment.findOne({
+            assignedTo: deliveryBoyId,
+            status: { $nin: ['broadcasted', 'completed'] }
+        })
+        if (alreadyAssigned) return res.status(400).json({ message: 'You are already assigned to another order' })
+
+        assignment.assignedTo = deliveryBoyId
+        assignment.status = 'assigned'
+        assignment.assignedAt = new Date()
+        await assignment.save()
+
+        const order = await Order.findById(assignment.order)
+        if (!order) return res.status(400).json({ message: 'order not found' })
+
+        const shopOrder = order.shopOrder.id(assignment.shopOrderId)
+        if (shopOrder) {
+            shopOrder.assignedDeliveryBoy = deliveryBoyId
+            shopOrder.assignment = assignment._id
+        }
+
+        await order.save()
+        await order.populate('shopOrder.assignedDeliveryBoy')
+
+        return res.status(200).json({ message: 'Order accepted successfully', assignment, order })
+    } catch (error) {
+        console.error('acceptOrder error:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+export const getCurrentOrder = async (req, res) => {
+    try {
+        const deliveryBoyId = req.userid
+        if (!deliveryBoyId) return res.status(401).json({ message: 'Unauthorized' })
+
+        const assignment = await DeliveryAssignment.findOne({
+            assignedTo: deliveryBoyId,
+            status: 'assigned'
+        })
+            .populate('shop', 'name address city state')
+            .populate('assignedTo', 'fullName email mobile location')
+            .populate({
+                path: 'order',
+                populate: [{ path: 'user', select: 'fullName email mobile' }]
+            })
+
+        if (!assignment) return res.status(400).json({ message: 'assignment not found' })
+        if (!assignment.order) return res.status(400).json({ message: 'order not found' })
+
+        const shopOrder = assignment.order.shopOrder.find(so => so._id.toString() === assignment.shopOrderId.toString())
+        if (!shopOrder) return res.status(400).json({ message: 'shop order not found' })
+
+        // delivery boy location
+        let deliveryBoyLocation = { lat: null, lon: null }
+        if (assignment.assignedTo?.location?.coordinates && assignment.assignedTo.location.coordinates.length === 2) {
+            deliveryBoyLocation.lat = assignment.assignedTo.location.coordinates[1]
+            deliveryBoyLocation.lon = assignment.assignedTo.location.coordinates[0]
+        }
+
+        // customer location
+        let customerLocation = { lat: null, lon: null }
+        if (assignment.order?.deliveryAddress) {
+            customerLocation.lat = assignment.order.deliveryAddress.latitude || null
+            customerLocation.lon = assignment.order.deliveryAddress.longitude || null
+        }
+
+        // shop address and geocode (if possible)
+        const shop = assignment.shop || null
+        let shopAddress = shop?.address || null
+        let shopLocation = { lat: null, lon: null }
+        if (shopAddress) {
+            try {
+                const nomRes = await axios.get('https://nominatim.openstreetmap.org/search', {
+                    params: { q: shopAddress, format: 'json', limit: 1 },
+                    headers: { 'User-Agent': 'HungryFoodApp/1.0' }
+                })
+                const first = nomRes.data?.[0]
+                if (first) {
+                    shopLocation.lat = parseFloat(first.lat)
+                    shopLocation.lon = parseFloat(first.lon)
+                }
+            } catch (e) {
+                console.warn('Shop geocode failed', e.message || e)
+            }
+        }
+
+        return res.status(200).json({
+            _id: assignment._id,
+            user: assignment.order.user,
+            shopOrder,
+            deliveryAddress: assignment.order.deliveryAddress,
+            deliveryBoyLocation,
+            customerLocation,
+            shopAddress,
+            shopLocation
+        })
+    } catch (error) {
+        console.error('getCurrentOrder error:', error)
+        return res.status(500).json({ message: 'Internal server error' })
+    }
+}
+
+

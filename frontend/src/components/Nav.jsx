@@ -9,7 +9,7 @@ import { useDispatch } from 'react-redux';
 import axios from 'axios';
 import { serverUrl } from '../config';
 import { setUserData } from '../redux/userSlice';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { SiFoodpanda } from "react-icons/si";
 
 
@@ -23,6 +23,8 @@ function Nav() {
     const cartCount = cartItems?.reduce((total, item) => total + item.quantity, 0) ?? 0
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const location = useLocation();
+    const hideMyOrdersOnDeliveryPage = userData?.role === 'deliveryBoy' && location.pathname.startsWith('/delivery-boy')
 
     const handleLogout = async() => {
         try {
@@ -109,7 +111,7 @@ function Nav() {
                     )}
 
                     {/* Orders button for owners and delivery boys */}
-                    {userData?.role === 'owner' || userData?.role === 'deliveryBoy' ? (
+                    {userData?.role === 'owner' ? (
                         <button 
                          onClick={() => navigate('/my-orders')}
                             className='flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs md:text-sm font-semibold transition-colors cursor-pointer'
@@ -162,13 +164,13 @@ function Nav() {
                                     {userData?.fullName ?? 'User'}
                                 </div>
 
-                                {userData?.role !== 'owner' && (
-                                     <div
-                                     onClick={()=>navigate('/my-orders')}
-                                      className='text-[#ff4d2d] font-semibold cursor-pointer hover:opacity-70'>
-                                    My Order
-                                </div>
-                                )}
+                                        {userData?.role !== 'owner' && userData?.role !== 'deliveryBoy' && (
+                                                                         <div
+                                                                         onClick={()=>navigate('/my-orders')}
+                                                                            className='text-[#ff4d2d] font-semibold cursor-pointer hover:opacity-70'>
+                                                                        My Order
+                                                                </div>
+                                                                )}
                                
                                 <div 
                                 onClick={handleLogout}
@@ -188,7 +190,7 @@ function Nav() {
                     <div className='flex items-center gap-3 px-4 py-3 bg-orange-400'>
                         <div className='flex items-center flex-1 gap-3 bg-white rounded-lg px-3 h-[42px]'>
                             <IoLocationSharp size={20} className='text-[#ff4d2d] shrink-0' />
-                            <span className='pr-3 text-sm text-gray-500 border-r border-gray-300 shrink-0'>Cuttack</span>
+                            <span className='pr-3 text-sm text-gray-500 border-r border-gray-300 shrink-0 truncate'>{city ?? 'Current Location'}</span>
                             <FiSearch size={18} className='text-gray-400 shrink-0' />
                             <input
                                 autoFocus

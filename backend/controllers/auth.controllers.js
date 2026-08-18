@@ -68,12 +68,15 @@ export const signIn = async (req, res) => {
       }
 
       const token = await genToken(user._id)
-      res.cookie("token", token, {
-         secure: false,
-         sameSite: "lax",
+      const secureFlag = process.env.NODE_ENV === 'production'
+      const cookieOptions = {
+         secure: secureFlag,
+         sameSite: 'none',
          maxAge: 7 * 24 * 60 * 60 * 1000,
          httpOnly: true
-      })
+      }
+      console.log('Setting auth cookie, secure=', cookieOptions.secure)
+      res.cookie('token', token, cookieOptions)
 
       return res.status(200).json({ user, token })
    } catch (error) {
@@ -170,12 +173,15 @@ export const googleAuth = async (req, res) => {
       }
 
        const token = await genToken(user._id)
-      res.cookie("token", token, {
-         secure: false,
-         sameSite: "lax",
+      const secureFlag2 = process.env.NODE_ENV === 'production'
+      const cookieOptions2 = {
+         secure: secureFlag2,
+         sameSite: 'none',
          maxAge: 7 * 24 * 60 * 60 * 1000,
          httpOnly: true
-      })
+      }
+      console.log('Setting auth cookie (google), secure=', cookieOptions2.secure)
+      res.cookie('token', token, cookieOptions2)
 
      return res.status(200).json({ user, token })
   
